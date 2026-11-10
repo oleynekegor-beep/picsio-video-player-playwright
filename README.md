@@ -10,9 +10,9 @@ The suite focuses on deterministic, high-value candidates from section 5:
 - Play/pause, keyboard seeking, mute state, video duration and the displayed time.
 - Standard/Timecode display switching.
 - Seeking to the midpoint of the short MOV.
-- AI Summary panel smoke check. It checks that the panel opens.
+- AI Summary panel smoke check. It checks that the panel opens and has a visible state, without evaluating generated text.
 
-Clip generation/download is left manual because processing and file creation are asynchronous. Timestamped comments are also left manual here: the plan requires deleting test comments in teardown, and a failed teardown could leave activity on the shared asset. Quality output, A/V sync, codecs, large files, mobile/Safari, and subjective processing UX remain exploratory/manual coverage as described in the plan.
+Clip boundary selection and clip generation/download are left manual for now. The UI showed a five-second selection after entering a one-second range, so the boundary behavior needs clarification before it is a stable automation check; generation and file creation are asynchronous. Timestamped comments are also left manual here: the plan requires deleting test comments in teardown, and a failed teardown could leave activity on the shared asset. Quality output, A/V sync, codecs, large files, mobile/Safari, and subjective processing UX remain exploratory/manual coverage as described in the plan.
 
 ## Requirements
 
@@ -25,19 +25,25 @@ Clip generation/download is left manual because processing and file creation are
 
 1. Install dependencies and Chromium:
 
-   ```bash
+   ```powershell
    npm install
    npx playwright install chromium
    ```
 
-2. Create an ignored auth-state directory and sign in manually in a Playwright-owned browser. Do not commit the resulting file:
+2. Create a local Chrome profile and sign in manually in regular Chrome. This avoids Google's block on the Playwright codegen browser. Chrome 136+ requires a separate profile when remote debugging is enabled. In a VS Code PowerShell terminal, run:
 
-   ```bash
-   mkdir .auth
-   npx playwright codegen --save-storage=.auth/user.json https://pics.io/login
+   ```powershell
+   $profile = Join-Path (Get-Location) '.auth/chrome-profile'
+   Start-Process "$env:ProgramFiles\Google\Chrome\Application\chrome.exe" -ArgumentList @('--remote-debugging-address=127.0.0.1', '--remote-debugging-port=9222', "--user-data-dir=$profile", 'https://pics.io/login')
    ```
 
-   Sign in in the opened browser, then close it to save the state. The repository ignores `.auth/`.
+   Sign in in the opened Chrome window. Leave it open, then run this in a second VS Code terminal:
+
+   ```bash
+   npm run auth:save
+   ```
+
+   This writes `.auth/user.json` for the tests. The repository ignores `.auth/`; never commit that file or the Chrome profile.
 
 3. Copy `.env.example` to `.env`. Set the direct preview URLs for the first MP4 and fourth MOV, using the IDs from your Pics.io library. Keep `.env` local; it contains private asset URLs and the path to your session state.
 
@@ -48,16 +54,14 @@ Clip generation/download is left manual because processing and file creation are
    ```
 
 Run with a visible browser using `npm run test:headed`, or open Playwright UI mode with `npm run test:ui`.
+If you want to use an already installed Chrome instead of Playwright's bundled Chromium, set `PLAYWRIGHT_CHANNEL=chrome` for that run.
 
 The tests skip with a clear reason until `PICSIO_STORAGE_STATE`, `PICSIO_MP4_URL`, and `PICSIO_MOV_URL` are set. Tests expect the reference MP4 to be about 67 seconds and the MOV about 7 seconds; update the bounds in the spec if the fixtures change.
+The suite uses two workers to avoid loading the same media fixtures from many parallel browser sessions at once.
 
 ## Selector strategy
 
-The inspected player has no `data-testid` or `aria-label` on its controls. Selectors are centralized in `tests/video-player.page.ts`, scoped to the stable `.videoControls` wrapper, and use the player’s exposed control IDs (`speed`, `timeView`, `btnCrop`) or semantic classes. No hashed CSS-module classes are used. If the product adds test IDs or accessible names, prefer those in the Page Object.
-
-## AI assistance
-
-OpenAI Codex helped translate section 5 into a focused suite, review the selector approach, and organize app-specific selectors in a Page Object. The generated AI Summary content is deliberately not judged; the test checks only that the panel opens and renders a state.
+The inspected player has no `data-testid` or `aria-label` on its controls. Selectors are centralized in `tests/video-player.page.ts` and use the stable `.videoControls` wrapper, exposed control IDs (`speed`, `timeView`), and player classes (`.btnPlayVideo`, `.playerGearMenu`). The scrubber currently has only a CSS-module class with a generated suffix, so the Page Object matches its stable `videoTracks--` prefix rather than a specific hash. If the product adds test IDs or accessible names, prefer those in the Page Object.
 
 ## Diagnostics
 

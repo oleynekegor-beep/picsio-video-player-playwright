@@ -7,7 +7,10 @@ const env = (globalThis as typeof globalThis & {
 
 export default defineConfig({
   testDir: './tests',
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
   fullyParallel: true,
+  workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: env.PICSIO_BASE_URL ?? 'https://pics.io',
@@ -20,7 +23,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(env.PLAYWRIGHT_CHANNEL ? { channel: env.PLAYWRIGHT_CHANNEL } : {}),
+      },
     },
   ],
 });

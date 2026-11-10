@@ -4,6 +4,7 @@
   "private": true,
   "description": "Focused Playwright checks for the Pics.io video preview player",
   "scripts": {
+    "auth:save": "node scripts/save-chrome-auth.mjs",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed"

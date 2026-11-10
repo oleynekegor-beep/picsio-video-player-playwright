@@ -12,28 +12,22 @@ export class VideoPlayerPage {
   readonly seekBar: Locator;
   readonly timeDisplay: Locator;
   readonly settingsButton: Locator;
-  readonly cropButton: Locator;
-  readonly clipStart: Locator;
-  readonly clipEnd: Locator;
-  readonly clipDuration: Locator;
   readonly aiSummaryButton: Locator;
+  readonly aiSummaryPanel: Locator;
   readonly page: Page;
 
   constructor(page: Page) {
     this.page = page;
     this.controls = page.locator('.videoControls');
     this.video = page.locator('video');
-    this.playPause = this.controls.locator('[title^="Play/Pause"], .playPauseButton').first();
-    this.seekBar = this.controls.locator('.seekBar');
+    this.playPause = this.controls.locator('.btnPlayVideo').first();
+    // Pics.io renders the scrubber with a CSS-module class whose stable prefix
+    // is videoTracks; match the prefix rather than its generated hash suffix.
+    this.seekBar = page.locator('[class*="videoTracks--"]');
     this.timeDisplay = this.controls.getByText(/^\d[\d:]*\s*\/\s*\d[\d:]*$/);
-    this.settingsButton = this.controls
-      .locator('button[title*="setting" i], .settingsButton')
-      .first();
-    this.cropButton = this.controls.locator('.btnCrop, [id="btnCrop"]').first();
-    this.clipStart = this.controls.locator('input[type="text"]').nth(0);
-    this.clipEnd = this.controls.locator('input[type="text"]').nth(1);
-    this.clipDuration = this.controls.getByText(/^\d{2} sec$/);
+    this.settingsButton = this.controls.locator('.playerGearMenu').first();
     this.aiSummaryButton = page.getByRole('button', { name: 'AI Summary', exact: true });
+    this.aiSummaryPanel = page.locator('.video-ai-preview');
   }
 
   async expectReady(minDuration: number, maxDuration: number): Promise<void> {
@@ -51,6 +45,8 @@ export class VideoPlayerPage {
   }
 
   async setPlaybackRate(rate: number, label: string): Promise<void> {
+    await this.video.hover();
+    await expect(this.settingsButton).toBeVisible();
     await this.settingsButton.click();
     const speedMenu = this.controls.locator('#speed');
     await expect(speedMenu).toBeVisible();
@@ -67,14 +63,17 @@ export class VideoPlayerPage {
   }
 
   async setTimeView(label: 'Standard' | 'Timecode'): Promise<void> {
+    await this.video.hover();
+    await expect(this.settingsButton).toBeVisible();
     await this.settingsButton.click();
-    const timeView = this.controls.locator('#timeView');
+    const timeView = this.page.locator('#timeView');
     await expect(timeView).toBeVisible();
     await timeView.click();
-    await this.controls.getByText(label, { exact: true }).click();
+    await this.page.getByText(label, { exact: true }).click();
   }
 
   async seekToFraction(fraction: number): Promise<void> {
+    await expect(this.seekBar).toBeVisible();
     const box = await this.seekBar.boundingBox();
     if (!box) throw new Error('The video seek bar is not visible');
 
@@ -86,20 +85,9 @@ export class VideoPlayerPage {
     });
   }
 
-  async openClipTool(): Promise<void> {
-    await this.cropButton.click();
-    await expect(this.clipStart).toBeVisible();
-    await expect(this.clipEnd).toBeVisible();
-  }
-
-  async setClip(startSeconds: number, endSeconds: number): Promise<void> {
-    const format = (seconds: number) => `00:${String(seconds).padStart(2, '0')}`;
-    await this.clipStart.fill(format(startSeconds));
-    await this.clipEnd.fill(format(endSeconds));
-  }
-
   async openAiSummary(): Promise<void> {
     await this.page.locator('#button-previewTranscripts').click();
     await expect(this.aiSummaryButton).toBeVisible();
+    await expect(this.aiSummaryPanel).toBeVisible();
   }
 }

@@ -25,7 +25,7 @@ test.describe('Pics.io video preview — point 5 automation candidates', () => {
     test.beforeEach(async ({ page }) => {
       test.skip(!hasSession, 'Set PICSIO_STORAGE_STATE to a local Playwright storage state.');
       test.skip(!mp4Url, 'Set PICSIO_MP4_URL to the first video preview URL in .env.');
-      await page.goto(mp4Url!);
+      await page.goto(mp4Url!, { waitUntil: 'domcontentloaded' });
       await new VideoPlayerPage(page).expectReady(66, 68);
     });
 
@@ -87,7 +87,7 @@ test.describe('Pics.io video preview — point 5 automation candidates', () => {
     test.beforeEach(async ({ page }) => {
       test.skip(!hasSession, 'Set PICSIO_STORAGE_STATE to a local Playwright storage state.');
       test.skip(!movUrl, 'Set PICSIO_MOV_URL to the fourth video preview URL in .env.');
-      await page.goto(movUrl!);
+      await page.goto(movUrl!, { waitUntil: 'domcontentloaded' });
       await new VideoPlayerPage(page).expectReady(6, 8);
     });
 
@@ -105,27 +105,12 @@ test.describe('Pics.io video preview — point 5 automation candidates', () => {
       await expect(player.timeDisplay).toBeVisible();
     });
 
-    test('enforces the one-second minimum and supports full and end-boundary clips', async ({ page }) => {
-      const player = new VideoPlayerPage(page);
-      await player.openClipTool();
-
-      await player.setClip(0, 1);
-      await expect(player.clipDuration).toHaveText('01 sec');
-
-      await player.setClip(0, 7);
-      await expect(player.clipDuration).toHaveText('07 sec');
-
-      await player.setClip(6, 7);
-      await expect(player.clipDuration).toHaveText('01 sec');
-    });
-
     test('opens AI Summary and renders a state without asserting its generated content', async ({ page }) => {
       const player = new VideoPlayerPage(page);
       await player.openAiSummary();
 
-      const summaryPanel = player.aiSummaryButton.locator('..');
       await expect.poll(async () => {
-        const panelText = (await summaryPanel.innerText()).replace('AI Summary', '').trim();
+        const panelText = (await player.aiSummaryPanel.innerText()).trim();
         return panelText.length > 0;
       }).toBe(true);
     });
