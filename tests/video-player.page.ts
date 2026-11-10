@@ -45,7 +45,6 @@ export class VideoPlayerPage {
   }
 
   async setPlaybackRate(rate: number, label: string): Promise<void> {
-    await this.video.hover();
     await expect(this.settingsButton).toBeVisible();
     await this.settingsButton.click();
     const speedMenu = this.controls.locator('#speed');
@@ -63,7 +62,6 @@ export class VideoPlayerPage {
   }
 
   async setTimeView(label: 'Standard' | 'Timecode'): Promise<void> {
-    await this.video.hover();
     await expect(this.settingsButton).toBeVisible();
     await this.settingsButton.click();
     const timeView = this.page.locator('#timeView');
