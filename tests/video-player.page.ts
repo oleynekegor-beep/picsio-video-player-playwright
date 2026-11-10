@@ -63,8 +63,12 @@ export class VideoPlayerPage {
 
   async setTimeView(label: 'Standard' | 'Timecode'): Promise<void> {
     await expect(this.settingsButton).toBeVisible();
-    await this.settingsButton.click();
     const timeView = this.page.locator('#timeView');
+    // Choosing a time view can leave the settings menu open. Don't toggle it
+    // closed when changing back to the other option.
+    if (!(await timeView.isVisible())) {
+      await this.settingsButton.click();
+    }
     await expect(timeView).toBeVisible();
     await timeView.click();
     await this.page.getByText(label, { exact: true }).click();
