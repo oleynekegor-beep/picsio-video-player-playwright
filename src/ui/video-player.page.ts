@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { VIDEO_PLAYER_SELECTORS as selector } from './constants/video-player.constants';
 
 /**
  * Player selectors live here so the spec stays readable and app-specific
@@ -14,20 +15,23 @@ export class VideoPlayerPage {
   readonly settingsButton: Locator;
   readonly aiSummaryButton: Locator;
   readonly aiSummaryPanel: Locator;
+  readonly aiSummaryText: Locator;
   readonly page: Page;
 
   constructor(page: Page) {
     this.page = page;
-    this.controls = page.locator('.videoControls');
-    this.video = page.locator('video');
-    this.playPause = this.controls.locator('.btnPlayVideo').first();
-    // Pics.io renders the scrubber with a CSS-module class whose stable prefix
-    // is videoTracks; match the prefix rather than its generated hash suffix.
-    this.seekBar = page.locator('[class*="videoTracks--"]');
-    this.timeDisplay = this.controls.getByText(/^\d[\d:]*\s*\/\s*\d[\d:]*$/);
-    this.settingsButton = this.controls.locator('.playerGearMenu').first();
-    this.aiSummaryButton = page.getByRole('button', { name: 'AI Summary', exact: true });
-    this.aiSummaryPanel = page.getByText(/Video & Audio Intelligence \(Beta\)/);
+    this.controls = page.locator(selector.controls);
+    this.video = page.locator(selector.video);
+    this.playPause = this.controls.locator(selector.playPause).first();
+    this.seekBar = page.locator(selector.seekBar);
+    this.timeDisplay = this.controls.getByText(selector.timeDisplay);
+    this.settingsButton = this.controls.locator(selector.settingsButton).first();
+    this.aiSummaryButton = page.getByRole('button', { name: selector.aiSummaryButtonName, exact: true });
+    this.aiSummaryPanel = page.getByText(selector.aiSummaryPanelHeading);
+    // The generated summary is rendered as a transcript list item. Match the
+    // stable CSS-module class prefix and assert content exists without pinning
+    // the test to AI-generated wording.
+    this.aiSummaryText = page.locator(selector.aiSummaryText);
   }
 
   async expectReady(minDuration: number, maxDuration: number): Promise<void> {
@@ -47,14 +51,12 @@ export class VideoPlayerPage {
   async setPlaybackRate(rate: number, label: string): Promise<void> {
     await expect(this.settingsButton).toBeVisible();
     await this.settingsButton.click();
-    const speedMenu = this.controls.locator('#speed');
+    const speedMenu = this.controls.locator(selector.speedMenu);
     await expect(speedMenu).toBeVisible();
     await speedMenu.click();
     await this.controls.getByText(label, { exact: true }).click();
 
-    await expect
-      .poll(() => this.video.evaluate((element) => (element as HTMLVideoElement).playbackRate))
-      .toBe(rate);
+    await expect(this.video).toHaveJSProperty('playbackRate', rate);
 
     // The menu summary reflects the selected rate. The checkmark is visual-only
     // in the current UI, so the test avoids coupling to its unnamed icon markup.
@@ -63,7 +65,7 @@ export class VideoPlayerPage {
 
   async setTimeView(label: 'Standard' | 'Timecode'): Promise<void> {
     await expect(this.settingsButton).toBeVisible();
-    const timeView = this.page.locator('#timeView');
+    const timeView = this.page.locator(selector.timeView);
     // Choosing a time view can leave the settings menu open. Don't toggle it
     // closed when changing back to the other option.
     if (!(await timeView.isVisible())) {
@@ -88,8 +90,10 @@ export class VideoPlayerPage {
   }
 
   async openAiSummary(): Promise<void> {
-    await this.page.locator('#button-previewTranscripts').click();
+    await this.page.locator(selector.transcriptsButton).click();
     await expect(this.aiSummaryButton).toBeVisible();
     await expect(this.aiSummaryPanel).toBeVisible();
+    await expect(this.aiSummaryText.first()).toBeVisible();
+    await expect(this.aiSummaryText.first()).toHaveText(/\S/);
   }
 }

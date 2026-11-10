@@ -7,10 +7,10 @@ TypeScript / Playwright tests for the Pics.io **video preview player**. The sele
 The suite focuses on deterministic, high-value candidates from section 5:
 
 - All eight playback speeds, with the HTML video `playbackRate` and the selected speed label checked. The checkmark itself is visual-only in the current UI, so the automated assertion uses the selected label rather than unnamed icon markup.
-- Play/pause, keyboard seeking, mute state, video duration and the displayed time.
+- Play/pause, seeking with the timeline, mute state, video duration and the displayed time.
 - Standard/Timecode display switching.
 - Seeking to the midpoint of the short MOV.
-- AI Summary panel smoke check. It verifies that the panel opens and its heading is visible, without evaluating generated text.
+- AI Summary smoke check. It verifies that the panel opens and a non-empty summary item is visible, without comparing AI-generated wording.
 
 Clip boundary selection and clip generation/download are left manual for now. The clip tool opens with a five-second default selection; changing that selection to validate one-second and boundary cases is outside this automated subset. Generation and file creation are asynchronous. Timestamped comments are also left manual here: the plan requires deleting test comments in teardown, and a failed teardown could leave activity on the shared asset. Quality output, A/V sync, codecs, large files, mobile/Safari, and subjective processing UX remain exploratory/manual coverage as described in the plan.
 
@@ -20,6 +20,10 @@ Clip boundary selection and clip generation/download are left manual for now. Th
 - npm
 - Playwright Chromium browser
 - Access to the Pics.io account containing the two video fixtures
+
+### Reviewer access
+
+The repository does not include `.env`, the authenticated browser state, or the private asset URLs. To run the tests, a reviewer needs a Pics.io account with access to an MP4 of about 67 seconds and a MOV of about 7 seconds, then must create a local browser state and set `PICSIO_STORAGE_STATE`, `PICSIO_MP4_URL`, and `PICSIO_MOV_URL` as described below. Without those values, the tests skip; no credentials or session files should be committed.
 
 ## Local setup
 
@@ -57,11 +61,11 @@ Run with a visible browser using `npm run test:headed`, or open Playwright UI mo
 If you want to use an already installed Chrome instead of Playwright's bundled Chromium, set `PLAYWRIGHT_CHANNEL=chrome` for that run.
 
 The tests skip with a clear reason until `PICSIO_STORAGE_STATE`, `PICSIO_MP4_URL`, and `PICSIO_MOV_URL` are set. Tests expect the reference MP4 to be about 67 seconds and the MOV about 7 seconds; update the bounds in the spec if the fixtures change.
-The suite uses two workers to avoid loading the same media fixtures from many parallel browser sessions at once.
+The suite uses one worker to avoid loading the same media fixtures from multiple browser sessions at once.
 
 ## Selector strategy
 
-The inspected player has no `data-testid` or `aria-label` on its controls. Selectors are centralized in `tests/video-player.page.ts` and use the stable `.videoControls` wrapper, exposed control IDs (`speed`, `timeView`), and player classes (`.btnPlayVideo`, `.playerGearMenu`). The scrubber currently has only a CSS-module class with a generated suffix, so the Page Object matches its stable `videoTracks--` prefix rather than a specific hash. If the product adds test IDs or accessible names, prefer those in the Page Object.
+The inspected player has no `data-testid` or `aria-label` on its controls. The Page Object is in `src/ui/video-player.page.ts`, and its selectors are centralized in `src/ui/constants/video-player.constants.ts`. They use the stable `.videoControls` wrapper, exposed control IDs (`speed`, `timeView`), and player classes (`.btnPlayVideo`, `.playerGearMenu`). The scrubber currently has only a CSS-module class with a generated suffix, so its selector matches the stable `videoTracks--` prefix rather than a specific hash. If the product adds test IDs or accessible names, prefer those in the Page Object.
 
 ## Diagnostics
 
