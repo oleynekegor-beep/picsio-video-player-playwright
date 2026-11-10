@@ -73,13 +73,18 @@ test.describe('Pics.io video preview — point 5 automation candidates', () => {
 
     test('switches between Standard and Timecode views', async ({ page }) => {
       const player = new VideoPlayerPage(page);
-      const standardValue = await player.timeDisplay.innerText();
+      const normalizeTime = (value: string) => value.replace(/\s+/g, '');
+      const standardValue = normalizeTime(await player.timeDisplay.innerText());
 
       await player.setTimeView('Timecode');
-      await expect.poll(() => player.timeDisplay.innerText()).not.toBe(standardValue);
+      await expect
+        .poll(async () => normalizeTime(await player.timeDisplay.innerText()))
+        .not.toBe(standardValue);
 
       await player.setTimeView('Standard');
-      await expect(player.timeDisplay).toHaveText(standardValue);
+      await expect
+        .poll(async () => normalizeTime(await player.timeDisplay.innerText()))
+        .toBe(standardValue);
     });
   });
 
