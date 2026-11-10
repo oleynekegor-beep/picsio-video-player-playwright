@@ -1,9 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { VideoPlayerPage } from './video-player.page';
 
-const hasSession = Boolean(process.env.PICSIO_STORAGE_STATE);
-const mp4Url = process.env.PICSIO_MP4_URL;
-const movUrl = process.env.PICSIO_MOV_URL;
+const env = (globalThis as typeof globalThis & {
+  process?: { env?: Record<string, string | undefined> };
+}).process?.env ?? {};
+
+const hasSession = Boolean(env.PICSIO_STORAGE_STATE);
+const mp4Url = env.PICSIO_MP4_URL;
+const movUrl = env.PICSIO_MOV_URL;
 
 const speedOptions = [
   { rate: 0.25, label: '0.25' },
@@ -37,27 +41,31 @@ test.describe('Pics.io video preview — point 5 automation candidates', () => {
       await expect(player.timeDisplay).toBeVisible();
 
       await player.playPause.click();
-      await expect.poll(() => player.video.evaluate((video) => video.paused)).toBe(false);
       await expect
-        .poll(() => player.video.evaluate((video) => video.currentTime))
+        .poll(() => player.video.evaluate((element) => (element as HTMLVideoElement).paused))
+        .toBe(false);
+      await expect
+        .poll(() => player.video.evaluate((element) => (element as HTMLVideoElement).currentTime))
         .toBeGreaterThan(0);
 
       await player.playPause.click();
-      await expect.poll(() => player.video.evaluate((video) => video.paused)).toBe(true);
+      await expect
+        .poll(() => player.video.evaluate((element) => (element as HTMLVideoElement).paused))
+        .toBe(true);
 
-      const duration = await player.video.evaluate((video) => video.duration);
+      const duration = await player.video.evaluate((element) => (element as HTMLVideoElement).duration);
       await player.seekToFraction(0.5);
       await expect
-        .poll(() => player.video.evaluate((video) => video.currentTime))
+        .poll(() => player.video.evaluate((element) => (element as HTMLVideoElement).currentTime))
         .toBeGreaterThan(duration * 0.35);
       await expect
-        .poll(() => player.video.evaluate((video) => video.currentTime))
+        .poll(() => player.video.evaluate((element) => (element as HTMLVideoElement).currentTime))
         .toBeLessThan(duration * 0.65);
 
-      const wasMuted = await player.video.evaluate((video) => video.muted);
+      const wasMuted = await player.video.evaluate((element) => (element as HTMLVideoElement).muted);
       await page.keyboard.press('m');
       await expect
-        .poll(() => player.video.evaluate((video) => video.muted))
+        .poll(() => player.video.evaluate((element) => (element as HTMLVideoElement).muted))
         .toBe(!wasMuted);
 
       await expect(player.timeDisplay).toContainText('01:06');
@@ -85,14 +93,14 @@ test.describe('Pics.io video preview — point 5 automation candidates', () => {
 
     test('seeks to the middle and updates the displayed playback time', async ({ page }) => {
       const player = new VideoPlayerPage(page);
-      const duration = await player.video.evaluate((video) => video.duration);
+      const duration = await player.video.evaluate((element) => (element as HTMLVideoElement).duration);
 
       await player.seekToFraction(0.5);
       await expect
-        .poll(() => player.video.evaluate((video) => video.currentTime))
+        .poll(() => player.video.evaluate((element) => (element as HTMLVideoElement).currentTime))
         .toBeGreaterThan(duration * 0.35);
       await expect
-        .poll(() => player.video.evaluate((video) => video.currentTime))
+        .poll(() => player.video.evaluate((element) => (element as HTMLVideoElement).currentTime))
         .toBeLessThan(duration * 0.65);
       await expect(player.timeDisplay).toBeVisible();
     });

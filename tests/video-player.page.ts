@@ -40,13 +40,13 @@ export class VideoPlayerPage {
     await expect(this.controls).toBeVisible();
     await expect(this.video).toBeVisible();
     await expect
-      .poll(() => this.video.evaluate((video) => video.readyState))
+      .poll(() => this.video.evaluate((element) => (element as HTMLVideoElement).readyState))
       .toBeGreaterThanOrEqual(2);
     await expect
-      .poll(() => this.video.evaluate((video) => video.duration))
+      .poll(() => this.video.evaluate((element) => (element as HTMLVideoElement).duration))
       .toBeGreaterThan(minDuration);
     await expect
-      .poll(() => this.video.evaluate((video) => video.duration))
+      .poll(() => this.video.evaluate((element) => (element as HTMLVideoElement).duration))
       .toBeLessThan(maxDuration);
   }
 
@@ -58,7 +58,7 @@ export class VideoPlayerPage {
     await this.controls.getByText(label, { exact: true }).click();
 
     await expect
-      .poll(() => this.video.evaluate((video) => video.playbackRate))
+      .poll(() => this.video.evaluate((element) => (element as HTMLVideoElement).playbackRate))
       .toBe(rate);
 
     // The menu summary reflects the selected rate. The checkmark is visual-only
