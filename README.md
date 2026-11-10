@@ -4,7 +4,7 @@ TypeScript / Playwright tests for the Pics.io **video preview player**. The sele
 
 ## What is automated
 
-The suite focuses on deterministic, high-value candidates from section 5:
+The suite focuses on deterministic, high-value candidates from the test plan section 5:
 
 - All eight playback speeds, with the HTML video `playbackRate` and the selected speed label checked. The checkmark itself is visual-only in the current UI, so the automated assertion uses the selected label rather than unnamed icon markup.
 - Play/pause, seeking with the timeline, mute state, video duration and the displayed time.
