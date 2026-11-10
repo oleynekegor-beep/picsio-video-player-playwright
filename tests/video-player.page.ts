@@ -27,7 +27,7 @@ export class VideoPlayerPage {
     this.timeDisplay = this.controls.getByText(/^\d[\d:]*\s*\/\s*\d[\d:]*$/);
     this.settingsButton = this.controls.locator('.playerGearMenu').first();
     this.aiSummaryButton = page.getByRole('button', { name: 'AI Summary', exact: true });
-    this.aiSummaryPanel = page.locator('.video-ai-preview');
+    this.aiSummaryPanel = page.getByText(/Video & Audio Intelligence \(Beta\)/);
   }
 
   async expectReady(minDuration: number, maxDuration: number): Promise<void> {

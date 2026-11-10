@@ -10,7 +10,7 @@ The suite focuses on deterministic, high-value candidates from section 5:
 - Play/pause, keyboard seeking, mute state, video duration and the displayed time.
 - Standard/Timecode display switching.
 - Seeking to the midpoint of the short MOV.
-- AI Summary panel smoke check. It checks that the panel opens and has a visible state, without evaluating generated text.
+- AI Summary panel smoke check. It verifies that the panel opens and its heading is visible, without evaluating generated text.
 
 Clip boundary selection and clip generation/download are left manual for now. The clip tool opens with a five-second default selection; changing that selection to validate one-second and boundary cases is outside this automated subset. Generation and file creation are asynchronous. Timestamped comments are also left manual here: the plan requires deleting test comments in teardown, and a failed teardown could leave activity on the shared asset. Quality output, A/V sync, codecs, large files, mobile/Safari, and subjective processing UX remain exploratory/manual coverage as described in the plan.
 
