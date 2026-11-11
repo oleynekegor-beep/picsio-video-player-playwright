@@ -1,11 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { VIDEO_PLAYER_SELECTORS as selector } from './constants/video-player.constants';
 
-/**
- * Player selectors live here so the spec stays readable and app-specific
- * selector changes have one maintenance point. The player has no test IDs or
- * aria-labels today; use its stable semantic wrapper and exposed control IDs.
- */
 export class VideoPlayerPage {
   readonly controls: Locator;
   readonly video: Locator;
@@ -28,9 +23,6 @@ export class VideoPlayerPage {
     this.settingsButton = this.controls.locator(selector.settingsButton).first();
     this.aiSummaryButton = page.getByRole('button', { name: selector.aiSummaryButtonName, exact: true });
     this.aiSummaryPanel = page.getByText(selector.aiSummaryPanelHeading);
-    // The generated summary is rendered as a transcript list item. Match the
-    // stable CSS-module class prefix and assert content exists without pinning
-    // the test to AI-generated wording.
     this.aiSummaryText = page.locator(selector.aiSummaryText);
   }
 
@@ -58,16 +50,12 @@ export class VideoPlayerPage {
 
     await expect(this.video).toHaveJSProperty('playbackRate', rate);
 
-    // The menu summary reflects the selected rate. The checkmark is visual-only
-    // in the current UI, so the test avoids coupling to its unnamed icon markup.
     await expect(speedMenu).toContainText(label);
   }
 
   async setTimeView(label: 'Standard' | 'Timecode'): Promise<void> {
     await expect(this.settingsButton).toBeVisible();
     const timeView = this.page.locator(selector.timeView);
-    // Choosing a time view can leave the settings menu open. Don't toggle it
-    // closed when changing back to the other option.
     if (!(await timeView.isVisible())) {
       await this.settingsButton.click();
     }
